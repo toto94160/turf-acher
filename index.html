@@ -1,153 +1,211 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#101713">
-<meta name="description" content="Analyse hippique indépendante et pronostics statistiques personnels.">
-<link rel="manifest" href="manifest.webmanifest">
-<title>Turf Acher — Analyse hippique</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes Pronos PMU</title>
 <style>
-:root{--bg:#0b100d;--panel:#141d17;--panel2:#1b2820;--line:#2a3a30;--text:#f1f6f1;--muted:#9aada0;--green:#9be2a9;--gold:#f1c878;--red:#f19a8d}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1a2b20 0,#0b100d 55%);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 14px calc(82px + env(safe-area-inset-bottom))}
-header{max-width:760px;margin:auto;padding:22px 2px 14px;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:850;letter-spacing:.4px;font-size:20px}.brand span{color:var(--green)}.pill{font-size:11px;border:1px solid #365641;color:var(--green);padding:6px 9px;border-radius:99px}
-main{max-width:760px;margin:auto}.hero{padding:19px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,#1c3023,#111a14);margin-bottom:14px}.eyebrow{color:var(--green);font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}.hero h1{font-size:27px;line-height:1.1;margin:9px 0}.hero p{color:var(--muted);margin:0;line-height:1.5;font-size:13px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px}.stat small{display:block;color:var(--muted);font-size:11px}.stat strong{display:block;font-size:23px;margin-top:5px}.card{margin:12px 0}.card h2{font-size:16px;margin:0 0 12px}.muted{color:var(--muted)}.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap}button,.filebtn{border:0;border-radius:12px;padding:12px 14px;background:var(--green);color:#102016;font-weight:800;font-size:13px;cursor:pointer}.secondary{background:#26362b;color:var(--text);border:1px solid #3b5141}.warning{background:#382b1b;color:var(--gold);border:1px solid #5c482b}.small{font-size:12px;padding:9px 11px}.race-list{display:grid;gap:8px}.race{padding:12px;background:var(--panel2);border:1px solid var(--line);border-radius:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}.race b{display:block}.race small{color:var(--muted)}.horse{display:grid;grid-template-columns:35px 1fr 58px;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}.horse:last-child{border:0}.num{width:31px;height:31px;border-radius:10px;background:#263a2c;display:grid;place-items:center;color:var(--green);font-weight:900}.horse-name{font-weight:750}.horse-meta{font-size:11px;color:var(--muted);margin-top:3px}.score{text-align:right;font-weight:850;color:var(--green)}.score small{display:block;color:var(--muted);font-weight:500;font-size:10px}.bar{height:6px;background:#29372e;border-radius:10px;margin-top:7px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#69bd80,#c4e7a5);border-radius:10px}
-label{font-size:12px;color:var(--muted);display:block;margin:10px 0 5px}input,select,textarea{width:100%;background:#0e1711;border:1px solid #35483a;border-radius:11px;padding:12px;color:var(--text);font:inherit}textarea{min-height:100px;resize:vertical}.fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.notice{font-size:12px;color:var(--muted);line-height:1.5;padding:11px;background:#111a14;border-radius:12px;margin-top:10px}.notice strong{color:var(--gold)}.hidden{display:none!important}nav{position:fixed;bottom:0;left:0;right:0;padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:#0c130eec;border-top:1px solid var(--line);display:flex;justify-content:center;gap:6px;backdrop-filter:blur(15px)}nav button{flex:1;max-width:180px;background:transparent;color:var(--muted);padding:10px 5px}nav button.active{background:#24372a;color:var(--green)}.tag{font-size:10px;color:var(--gold);border:1px solid #5b4829;border-radius:99px;padding:4px 7px}
-@media(min-width:600px){body{padding-left:24px;padding-right:24px}.hero h1{font-size:34px}}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; background:#0f172a; color:#e2e8f0; padding:16px; }
+  h1 { color:#38bdf8; text-align:center; font-size:1.3rem; margin-bottom:4px; }
+  .sub { text-align:center; font-size:.75rem; color:#94a3b8; margin-bottom:14px; }
+  .controls { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  select, button { width:100%; padding:13px; border-radius:10px; border:1px solid #334155; background:#1e293b; color:#e2e8f0; font-size:.95rem; }
+  button { background:#0284c7; border-color:#0284c7; font-weight:600; }
+  button:disabled { opacity:.5; }
+  button.refresh { background:#0ea5e9; }
+  #status { text-align:center; margin:10px 0; color:#94a3b8; font-size:.85rem; }
+  .info { background:#1e293b; padding:12px; border-radius:10px; border-left:4px solid #38bdf8; margin-bottom:10px; }
+  .info h2 { color:#38bdf8; font-size:1rem; margin-bottom:4px; }
+  .info p { font-size:.8rem; color:#cbd5e1; }
+  .section-title { font-size:.85rem; color:#94a3b8; margin:14px 0 8px; text-transform:uppercase; letter-spacing:1px; }
+  .card { background:#1e293b; padding:10px; border-radius:10px; margin-bottom:6px; display:flex; align-items:center; gap:10px; border-left:3px solid #475569; }
+  .card.top1 { border-left-color:#facc15; }
+  .card.top2 { border-left-color:#cbd5e1; }
+  .card.top3 { border-left-color:#d97706; }
+  .rank { font-size:1.1rem; font-weight:700; color:#38bdf8; min-width:26px; text-align:center; }
+  .info-h { flex:1; min-width:0; }
+  .name { font-weight:600; font-size:.9rem; }
+  .meta { font-size:.72rem; color:#94a3b8; margin-top:1px; }
+  .cote { font-weight:700; color:#22c55e; font-size:.95rem; text-align:right; }
+  .score { font-size:.7rem; color:#facc15; }
+  .arrivee { background:#1e293b; padding:10px; border-radius:10px; margin-bottom:6px; font-size:.85rem; }
+  .arrivee strong { color:#facc15; }
+  .error { color:#f87171; text-align:center; padding:16px; font-size:.85rem; }
+  .footer { text-align:center; margin-top:18px; font-size:.7rem; color:#64748b; line-height:1.5; }
 </style>
 </head>
 <body>
-<header><div class="brand">🐎 TURF <span>ACHER</span></div><div class="pill">BÊTA · GRATUIT</div></header>
-<main>
-<section class="hero">
- <div class="eyebrow">Ton laboratoire hippique</div>
- <h1>Des analyses. Pas des pronostics copiés.</h1>
- <p>Un classement indépendant calculé à partir des données disponibles. Les scores sont des indicateurs expérimentaux, jamais une garantie de résultat.</p>
-</section>
-<section id="dashboard">
- <div class="grid">
-  <div class="stat"><small>Courses chargées</small><strong id="raceCount">0</strong></div>
-  <div class="stat"><small>Partants analysés</small><strong id="horseCount">0</strong></div>
- </div>
- <div class="card">
-  <div class="row"><h2>Programme du jour</h2><span class="tag" id="dataStatus">Aucune donnée</span></div>
-  <div id="races" class="race-list"><p class="muted">Charge un programme ou importe un fichier de données pour commencer.</p></div>
-  <div class="actions" style="margin-top:12px">
-   <button id="loadDemo" class="secondary">Voir une démonstration</button>
-   <button id="refresh" class="secondary">Actualiser les données</button>
-  </div>
-  <div class="notice"><strong>Connexion aux données :</strong> la récupération automatique dépend de l'accès réseau et des règles CORS de la source. Si elle échoue, utilise l'import JSON/CSV ci-dessous. Le logiciel ne fabrique jamais de partants réels.</div>
- </div>
- <div class="card">
-  <h2>Sources gratuites & limites</h2>
-  <p class="muted" style="font-size:12px;line-height:1.6">Le programme PMU public peut exposer des réunions et partants, mais son interface n'est pas une API officiellement documentée et peut changer. Open PMU API sert surtout à consulter des arrivées historiques. Ce prototype ne revendique aucun accès garanti au direct.</p>
-  <p style="font-size:12px"><a style="color:var(--green)" href="https://open-pmu-api.vercel.app/" target="_blank" rel="noopener">Open PMU API ↗</a> · <a style="color:var(--green)" href="https://www.pmu.fr/" target="_blank" rel="noopener">PMU ↗</a></p>
- </div>
-</section>
-<section id="analysis" class="hidden">
- <div class="card">
-  <div class="row"><h2>Analyse de la course</h2><select id="raceSelect" style="max-width:145px"></select></div>
-  <div id="raceInfo" class="muted" style="font-size:12px;margin-bottom:12px"></div>
-  <div id="ranking"></div>
-  <div class="notice">Le score combine les informations disponibles : forme récente, gains, régularité et expérience. Les critères absents sont neutralisés et signalés. Un score élevé ne signifie pas une probabilité de victoire.</div>
- </div>
- <div class="card"><h2>Ajouter un cheval manuellement</h2>
-  <div class="fieldgrid">
-   <div><label>Numéro</label><input id="hNum" type="number" min="1" placeholder="Ex. 4"></div>
-   <div><label>Nom du cheval</label><input id="hName" placeholder="Nom"></div>
-   <div><label>Musique (récent à ancien)</label><input id="hMusic" placeholder="1a 3a 2a 0a"></div>
-   <div><label>Gains (€)</label><input id="hEarnings" type="number" min="0" placeholder="Ex. 45000"></div>
-   <div><label>Âge</label><input id="hAge" type="number" min="2" placeholder="Ex. 6"></div>
-   <div><label>Jockey / driver</label><input id="hJockey" placeholder="Nom (facultatif)"></div>
-  </div>
-  <button id="addHorse" style="margin-top:12px">Ajouter à la course</button>
- </div>
-</section>
-<section id="data" class="hidden">
- <div class="card">
-  <h2>Importer un programme</h2>
-  <p class="muted" style="font-size:12px;line-height:1.5">Importe un JSON contenant une liste de courses et leurs partants. Le format simple accepté est expliqué ci-dessous. Tu peux aussi saisir les chevaux un par un dans l'onglet Analyse.</p>
-  <label>Fichier JSON ou CSV</label><input id="fileInput" type="file" accept=".json,.csv,application/json,text/csv">
-  <div class="actions" style="margin-top:10px"><button id="importBtn">Importer le fichier</button><button id="exportBtn" class="secondary">Exporter mes données</button></div>
-  <label>Ou coller un JSON</label><textarea id="jsonInput" placeholder='{"races":[{"id":"R1C1","meeting":"R1","number":1,"name":"Prix exemple","horses":[{"number":4,"name":"Cheval A","music":"1a 2a 3a","earnings":45000,"age":6}]}]}'></textarea>
-  <button id="pasteImport" class="secondary">Importer le texte</button>
-  <div class="notice">Format : <code>races[]</code> avec <code>id</code>, <code>meeting</code>, <code>number</code>, <code>name</code>, <code>horses[]</code>. Chaque cheval peut contenir <code>number</code>, <code>name</code>, <code>music</code>, <code>earnings</code>, <code>age</code>, <code>jockey</code>.</div>
- </div>
- <div class="card">
-  <h2>Historique & méthode</h2>
-  <p class="muted" style="font-size:12px;line-height:1.6">Les pronostics et les données restent dans le stockage local de ce navigateur. Pour mesurer la performance, il faudra enregistrer le classement avant le départ puis importer ou saisir l'arrivée officielle après la course. Cette première version ne prétend pas être un modèle prédictif entraîné.</p>
-  <button id="clearData" class="warning small">Effacer les données locales</button>
- </div>
-</section>
-</main>
-<nav>
- <button class="active" data-tab="dashboard">🏠<br>Accueil</button>
- <button data-tab="analysis">📊<br>Analyse</button>
- <button data-tab="data">📥<br>Données</button>
-</nav>
+
+<h1>🐎 Mes Pronos PMU</h1>
+<p class="sub">Partants • Cotes • Pronostics • Arrivées</p>
+
+<div class="controls">
+  <select id="reunion"><option value="">— Réunion —</option></select>
+  <select id="course" disabled><option value="">— Course —</option></select>
+  <button id="load" disabled>Charger</button>
+  <button id="refresh" class="refresh" disabled style="display:none">🔄 Rafraîchir les cotes</button>
+</div>
+
+<div id="status">Chargement…</div>
+<div id="result"></div>
+
+<div class="footer">
+  Partants/cotes : API PMU • Arrivées : open-pmu-api<br>
+  Pronostics calculés (cotes + musique). Jouer comporte des risques.
+</div>
+
 <script>
-const $=id=>document.getElementById(id);
-let races=(()=>{try{return JSON.parse(localStorage.getItem("turf-acher-races")||"[]")}catch{return []}})();
-const sample={races:[{id:"DEMO-R1C1",meeting:"R1",number:1,name:"Prix de démonstration",track:"Hippodrome fictif",distance:2100,discipline:"Trot attelé",horses:[
-{number:8,name:"Étoile du Test",music:"1a 2a 3a 1a 4a",earnings:84500,age:6,jockey:"Driver exemple"},
-{number:4,name:"Bolide Démo",music:"2a 1a 0a 3a 2a",earnings:102000,age:7,jockey:"Driver exemple"},
-{number:12,name:"Joli Outsider",music:"5a 4a 2a 6a 1a",earnings:39000,age:5,jockey:"Driver exemple"},
-{number:3,name:"Rapide Fictif",music:"Da 1a 7a 2a 0a",earnings:57000,age:6,jockey:"Driver exemple"},
-{number:6,name:"Chance du Modèle",music:"3a 3a 4a 2a 5a",earnings:61000,age:8,jockey:"Driver exemple"}
-]}]};
-function musicValues(s){return (String(s||"").toLowerCase().match(/\d+[a-z]?|[daht]/g)||[]).slice(0,8).map(x=>/^\d/.test(x)?Number.parseInt(x,10):({d:10,a:10,h:10,t:10}[x]??10))}
-function scoreHorse(h){
- const vals=musicValues(h.music), places=vals.filter(x=>x>=1&&x<=3).length, valid=vals.filter(x=>x>=1&&x<=9);
- let form=vals.length?Math.max(0,100-(vals.reduce((a,b)=>a+Math.min(b,10),0)/vals.length-1)*11):null;
- let regular=vals.length?Math.max(0,100-(valid.length/vals.length<.5?45:0)-((Math.max(...vals)-Math.min(...vals))*3)):null;
- let earnings=Number(h.earnings)>0?Math.min(100,Math.log10(Number(h.earnings)+1)*11):null;
- let age=Number(h.age)>0?Math.max(35,100-Math.abs(Number(h.age)-6)*10):null;
- const parts=[[form,.50],[regular,.25],[earnings,.15],[age,.10]].filter(x=>x[0]!==null);
- const total=parts.reduce((s,p)=>s+p[1],0);
- return {score:parts.reduce((s,p)=>s+p[0]*p[1],0)/total,coverage:Math.round(total*100),form,places};
+const PROXY = "https://corsproxy.io/?";
+const API_PMU = "https://offline.turfinfo.api.pmu.fr/rest/client/1/programme";
+const API_ARR = "https://open-pmu-api.vercel.app/api/arrivees";
+const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
+let programme = null;
+const $ = id => document.getElementById(id);
+
+async function pmuGet(path) {
+  const res = await fetch(PROXY + encodeURIComponent(`${API_PMU}/${path}`));
+  if (!res.ok) throw new Error("PMU HTTP " + res.status);
+  return res.json();
 }
-function ranked(r){return [...(r.horses||[])].map(h=>({...h,analysis:scoreHorse(h)})).sort((a,b)=>b.analysis.score-a.analysis.score)}
-function render(){
- $("raceCount").textContent=races.length;$("horseCount").textContent=races.reduce((n,r)=>n+(r.horses||[]).length,0);
- $("dataStatus").textContent=races.length?"Données chargées":"Aucune donnée";
- $("races").innerHTML=races.length?races.map((r,i)=>`<div class="race"><div><b>${esc(r.meeting||"R?")} · C${esc(r.number||i+1)} — ${esc(r.name||"Course sans nom")}</b><small>${esc(r.track||"Hippodrome non renseigné")} · ${(r.horses||[]).length} partants</small></div><button class="small" onclick="openRace(${i})">Analyser</button></div>`).join(""):'<p class="muted">Aucune course chargée. Essaie la démonstration ou importe tes données.</p>';
- $("raceSelect").innerHTML=races.map((r,i)=>`<option value="${i}">${esc(r.meeting||"R?")} C${esc(r.number||i+1)}</option>`).join("");
- if(races.length)showRanking(Number($("raceSelect").value||0));
+
+async function init() {
+  try {
+    programme = await pmuGet(today);
+    (programme.reunions || []).forEach(ru => {
+      const o = document.createElement("option");
+      o.value = ru.numOfficiel;
+      o.textContent = `R${ru.numOfficiel} — ${ru.hippodrome?.libelleLong || ""}`;
+      $("reunion").appendChild(o);
+    });
+    $("status").textContent = "Sélectionnez une réunion.";
+  } catch(e) {
+    $("status").innerHTML = `<span class="error">Erreur programme : ${e.message}<br>Réessayez dans quelques secondes.</span>`;
+  }
 }
-function showRanking(i){
- const r=races[i];if(!r)return;
- $("raceInfo").textContent=[r.name,r.track,r.discipline,r.distance?`${r.distance} m`:null].filter(Boolean).join(" · ");
- const list=ranked(r);
- $("ranking").innerHTML=list.length?list.map((h,j)=>`<div class="horse"><div class="num">${esc(h.number??"—")}</div><div><div class="horse-name">${esc(h.name||"Cheval sans nom")}</div><div class="horse-meta">Musique : ${esc(h.music||"non renseignée")} · Couverture ${h.analysis.coverage}%</div><div class="bar"><i style="width:${Math.round(h.analysis.score)}%"></i></div></div><div class="score">${Math.round(h.analysis.score)}<small>score /100</small></div></div>`).join(""):'<p class="muted">Aucun partant dans cette course.</p>';
-}
-function openRace(i){$("raceSelect").value=i;showRanking(i);switchTab("analysis")}
-$("raceSelect").addEventListener("change",e=>showRanking(Number(e.target.value)));
-function switchTab(tab){["dashboard","analysis","data"].forEach(t=>$(t).classList.toggle("hidden",t!==tab));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab))}
-document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
-function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-$("loadDemo").onclick=()=>{races=JSON.parse(JSON.stringify(sample.races));render();};
-$("addHorse").onclick=()=>{let r=races[Number($("raceSelect").value||0)];if(!r){alert("Charge d'abord une course.");return}let name=$("hName").value.trim();if(!name){alert("Saisis le nom du cheval.");return}r.horses.push({number:Number($("hNum").value)||"",name,music:$("hMusic").value,earnings:Number($("hEarnings").value)||0,age:Number($("hAge").value)||0,jockey:$("hJockey").value});["hNum","hName","hMusic","hEarnings","hAge","hJockey"].forEach(id=>$(id).value="");render();showRanking(Number($("raceSelect").value||0));};
-function importObject(obj){const arr=Array.isArray(obj)?obj:obj.races;if(!Array.isArray(arr))throw Error("Le JSON doit contenir un tableau races.");races=arr.map((r,i)=>({...r,id:r.id||`R${i+1}`,horses:Array.isArray(r.horses)?r.horses:[]}));render();switchTab("dashboard")}
-$("pasteImport").onclick=()=>{try{importObject(JSON.parse($("jsonInput").value))}catch(e){alert("Import impossible : "+e.message)}};
-$("importBtn").onclick=async()=>{const f=$("fileInput").files[0];if(!f){alert("Choisis un fichier.");return}try{let t=await f.text();if(f.name.endsWith(".json"))importObject(JSON.parse(t));else alert("CSV : utilise le format JSON pour cette première version.")}catch(e){alert("Erreur de lecture : "+e.message)}};
-$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify({races},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="turf-acher-donnees.json";a.click();URL.revokeObjectURL(a.href)};
-$("clearData").onclick=()=>{if(confirm("Effacer toutes les données enregistrées sur cet appareil ?")){races=[];localStorage.removeItem("turf-acher-races");render()}};
-$("refresh").onclick=async()=>{
- const now=new Date(),dd=String(now.getDate()).padStart(2,"0"),mm=String(now.getMonth()+1).padStart(2,"0"),yyyy=now.getFullYear(),date=dd+mm+yyyy;
- const url=`https://online.turfinfo.api.pmu.fr/rest/client/1/programme/${date}`;
- $("dataStatus").textContent="Connexion…";
- try{
-  const res=await fetch(url,{headers:{Accept:"application/json"}});
-  if(!res.ok)throw Error("HTTP "+res.status);
-  const data=await res.json();
-  const meetings=data.reunions||data.programme?.reunions||[];
-  if(!meetings.length)throw Error("Format de réponse non reconnu.");
-  races=meetings.flatMap(m=>(m.courses||[]).map(c=>({id:`${m.numReunion||m.numeroReunion||"R"}C${c.numCourse||c.numeroCourse}`,meeting:`R${m.numReunion||m.numeroReunion||"?"}`,number:c.numCourse||c.numeroCourse,name:c.libelle||c.prix?.libelle||"Course",track:m.hippodrome?.libelle||m.hippodrome?.nom||"",distance:c.distance,discipline:c.specialite||"",horses:[]})));
-  render();alert("Programme chargé. Si les partants ne sont pas présents, importe leur liste séparément.");
- }catch(e){$("dataStatus").textContent="Indisponible";alert("Récupération automatique impossible : "+e.message+". La source peut bloquer les requêtes du navigateur (CORS) ou avoir changé. Tu peux importer un JSON ou utiliser la démonstration.")}
+
+$("reunion").onchange = () => {
+  const ru = programme.reunions.find(x => String(x.numOfficiel) === $("reunion").value);
+  $("course").innerHTML = '<option value="">— Course —</option>';
+  $("course").disabled = !ru;
+  $("load").disabled = true;
+  $("refresh").style.display = "none";
+  $("result").innerHTML = "";
+  if (!ru) return;
+  (ru.courses || []).forEach(c => {
+    const o = document.createElement("option");
+    o.value = c.numOrdre;
+    o.textContent = `C${c.numOrdre} — ${c.libelle || ""} (${c.discipline || ""} ${c.distance || ""}m)`;
+    $("course").appendChild(o);
+  });
+  $("status").textContent = "Sélectionnez une course.";
 };
-if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
-render();
+
+$("course").onchange = () => {
+  const ok = !!$("course").value;
+  $("load").disabled = !ok;
+  if (ok) $("refresh").style.display = "block";
+};
+
+$("load").onclick = load;
+$("refresh").onclick = load;
+
+function scoreProno(p) {
+  // Score simple : cote basse = favori, musique = forme
+  let score = 0;
+  const cote = p.cote < 999 ? p.cote : 50;
+  score += Math.max(0, 100 - cote * 2); // plus la cote est basse, plus le score est haut
+  // Musique : "1p 2p 3p" → bonus pour places récentes
+  const mus = (p.musique || "").split(/\s+/).slice(0,5);
+  mus.forEach((m, i) => {
+    const place = parseInt(m);
+    if (!isNaN(place)) {
+      if (place === 1) score += 15 - i*2;
+      else if (place <= 3) score += 8 - i;
+      else if (place <= 5) score += 3 - i*0.5;
+    }
+  });
+  return Math.max(0, Math.round(score));
+}
+
+async function load() {
+  const ru = $("reunion").value, co = $("course").value;
+  $("status").textContent = "Chargement…";
+  $("result").innerHTML = "";
+  $("load").disabled = true;
+
+  try {
+    // 1) Partants + cotes
+    const data = await pmuGet(`${today}/R${ru}/C${co}/participants`);
+    const parts = (data.participants || []).map(p => ({
+      ...p,
+      cote: parseFloat(p.dernierRapportDirect?.rapport) || parseFloat(p.dernierRapportReference?.rapport) || 999
+    }));
+
+    const ruData = programme.reunions.find(x => String(x.numOfficiel) === ru);
+    const coData = ruData.courses.find(c => String(c.numOrdre) === co);
+
+    // Header course
+    const info = document.createElement("div");
+    info.className = "info";
+    info.innerHTML = `<h2>R${ru} C${co} — ${coData.libelle || ""}</h2>
+      <p>${coData.discipline || ""} • ${coData.distance || "?"}m • ${parts.length} partants</p>`;
+    $("result").appendChild(info);
+
+    // 2) Classement pronostic
+    parts.forEach(p => p.score = scoreProno(p));
+    const sorted = [...parts].sort((a,b) => b.score - a.score);
+
+    const titleP = document.createElement("div");
+    titleP.className = "section-title";
+    titleP.textContent = "🎯 Pronostic (score)";
+    $("result").appendChild(titleP);
+
+    sorted.forEach((p, i) => {
+      const card = document.createElement("div");
+      card.className = "card" + (i===0?" top1":i===1?" top2":i===2?" top3":"");
+      card.innerHTML = `
+        <div class="rank">${i+1}</div>
+        <div class="info-h">
+          <div class="name">${p.numPmu || ""} — ${p.nom || ""}</div>
+          <div class="meta">${p.driver || ""} • Musique: ${p.musique || "—"}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="cote">${p.cote < 999 ? p.cote.toFixed(1) : "—"}</div>
+          <div class="score">score ${p.score}</div>
+        </div>`;
+      $("result").appendChild(card);
+    });
+
+    // 3) Arrivées passées (même prix si possible)
+    try {
+      const arrRes = await fetch(`${API_ARR}?prix=${encodeURIComponent(coData.libelle || "")}`);
+      const arrData = await arrRes.json();
+      const courses = (arrData.message || []).slice(0, 3);
+      if (courses.length) {
+        const titleA = document.createElement("div");
+        titleA.className = "section-title";
+        titleA.textContent = "📊 Arrivées passées (même prix)";
+        $("result").appendChild(titleA);
+        courses.forEach(c => {
+          const div = document.createElement("div");
+          div.className = "arrivee";
+          div.innerHTML = `<strong>${c.date}</strong> — ${c.lieu} • ${c.discipline} ${c.distance}m<br>
+            Arrivée : <strong>${(c.arrivee||[]).join(" - ")}</strong>`;
+          $("result").appendChild(div);
+        });
+      }
+    } catch(e) { /* silencieux : arrivées optionnelles */ }
+
+    $("status").textContent = `✅ Mis à jour à ${new Date().toLocaleTimeString()}`;
+    $("load").disabled = false;
+  } catch(e) {
+    $("status").innerHTML = `<span class="error">Erreur : ${e.message}</span>`;
+    $("load").disabled = false;
+  }
+}
+
+init();
 </script>
-</body></html>
+</body>
+</html>
