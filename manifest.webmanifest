@@ -1,0 +1,9 @@
+{
+  "name": "Turf Acher — Analyse hippique",
+  "short_name": "Turf Acher",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b100d",
+  "theme_color": "#101713",
+  "description": "Analyse hippique indépendante"
+}
