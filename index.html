@@ -38,21 +38,10 @@
 <p class="sub">Partants • Cotes • Pronostics • Arrivées</p>
 
 <div class="controls">
-  <select id="hippo">
-    <!-- Chantilly par défaut car on sait qu'il y a des données -->
-    <option value="Chantilly" selected>Chantilly</option>
-    <option value="Vincennes">Vincennes</option>
-    <option value="Deauville">Deauville</option>
-    <option value="Longchamp">Longchamp</option>
-    <option value="Enghien">Enghien</option>
-    <option value="Auteuil">Auteuil</option>
-    <option value="Saint-Cloud">Saint-Cloud</option>
-  </select>
-  <select id="course" disabled><option value="">— Course —</option></select>
-  <button id="load" disabled>Charger la course</button>
+  <button id="load" style="background:#0ea5e9">Charger les données (Chantilly)</button>
 </div>
 
-<div id="status">Chargement des courses...</div>
+<div id="status">Prêt à charger.</div>
 <div id="result"></div>
 
 <div class="footer">
@@ -61,57 +50,9 @@
 </div>
 
 <script>
-// LE PROXY INDISPENSABLE POUR CONTOURNER LE BLOCAGE SAFARI/IPHONE
-const PROXY = "https://api.allorigins.win/raw?url=";
-const API_ARR = "https://open-pmu-api.vercel.app/api/arrivees";
+// On utilise l'URL EXACTE qui a fonctionné dans votre premier message
+const API_URL = "https://open-pmu-api.vercel.app/api/arrivees?hippo=Chantilly";
 const $ = id => document.getElementById(id);
-let currentCourses = [];
-
-// Charger les courses de l'hippodrome
-async function loadHippodrome(hippo) {
-  $("course").innerHTML = '<option value="">— Course —</option>';
-  $("course").disabled = true;
-  $("load").disabled = true;
-  $("result").innerHTML = "";
-  $("status").textContent = "Recherche des courses pour " + hippo + "...";
-
-  try {
-    // On encode l'URL de l'API pour la faire passer par le proxy
-    const targetUrl = encodeURIComponent(`${API_ARR}?hippo=${encodeURIComponent(hippo)}`);
-    const res = await fetch(PROXY + targetUrl);
-    
-    if (!res.ok) throw new Error("Erreur serveur");
-    const data = await res.json();
-    
-    if (data.error) throw new Error("Erreur API");
-    currentCourses = data.message || [];
-    
-    if (!currentCourses.length) {
-      $("status").innerHTML = `<span class="error">Aucune course trouvée pour ${hippo}.</span>`;
-      return;
-    }
-
-    currentCourses.forEach((c, i) => {
-      const o = document.createElement("option");
-      o.value = i;
-      const dateStr = c.date ? c.date.split('-').reverse().join('/') : '';
-      o.textContent = `${c.prix} (${dateStr})`;
-      $("course").appendChild(o);
-    });
-
-    $("course").disabled = false;
-    $("status").textContent = `${currentCourses.length} courses trouvées. Sélectionnez-en une.`;
-  } catch(e) {
-    $("status").innerHTML = `<span class="error">Erreur réseau : ${e.message}</span>`;
-  }
-}
-
-// Événements
-$("hippo").onchange = () => loadHippodrome($("hippo").value);
-$("course").onchange = () => { $("load").disabled = !$("course").value; };
-$("load").onclick = () => {
-  if ($("course").value !== "") renderCourse(currentCourses[$("course").value]);
-};
 
 // Algo de pronostic
 function scoreProno(p) {
@@ -153,10 +94,7 @@ function renderCourse(c) {
     });
   }
 
-  if (!parts.length) {
-    $("status").textContent = "Aucun détail de partant disponible.";
-    return;
-  }
+  if (!parts.length) return;
 
   const info = document.createElement("div");
   info.className = "info";
@@ -193,12 +131,43 @@ function renderCourse(c) {
       </div>`;
     $("result").appendChild(card);
   });
-
-  $("status").textContent = `✅ Analyse terminée.`;
 }
 
-// Lancement automatique sur Chantilly
-loadHippodrome("Chantilly");
+// Chargement direct
+$("load").onclick = async () => {
+  $("status").textContent = "Chargement des données de Chantilly...";
+  $("load").disabled = true;
+  try {
+    // Un fetch direct, sans aucun proxy
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    
+    if (data.error) throw new Error("Erreur API");
+    const courses = data.message || [];
+    
+    if (!courses.length) {
+      $("status").textContent = "Aucune course trouvée.";
+      $("load").disabled = false;
+      return;
+    }
+
+    // On affiche les 5 premières courses pour ne pas surcharger l'écran
+    $("result").innerHTML = "";
+    const title = document.createElement("div");
+    title.className = "section-title";
+    title.textContent = "📊 Courses trouvées à Chantilly";
+    $("result").appendChild(title);
+
+    courses.slice(0, 5).forEach(c => renderCourse(c));
+    
+    $("status").textContent = `✅ ${courses.length} courses chargées (5 affichées).`;
+    $("load").disabled = false;
+  } catch(e) {
+    $("status").innerHTML = `<span class="error">Erreur : ${e.message}</span>`;
+    $("load").disabled = false;
+  }
+};
 </script>
 </body>
 </html>
