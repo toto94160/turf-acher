@@ -28,8 +28,6 @@
   .meta { font-size:.72rem; color:#94a3b8; margin-top:1px; }
   .cote { font-weight:700; color:#22c55e; font-size:.95rem; text-align:right; }
   .score { font-size:.7rem; color:#facc15; }
-  .arrivee { background:#1e293b; padding:10px; border-radius:10px; margin-bottom:6px; font-size:.8rem; }
-  .arrivee strong { color:#facc15; }
   .error { color:#f87171; text-align:center; padding:16px; font-size:.85rem; }
   .footer { text-align:center; margin-top:18px; font-size:.7rem; color:#64748b; line-height:1.5; }
 </style>
@@ -40,12 +38,21 @@
 <p class="sub">Partants • Cotes • Pronostics • Arrivées</p>
 
 <div class="controls">
-  <select id="hippo"><option value="">— Hippodrome —</option></select>
+  <select id="hippo">
+    <!-- Chantilly par défaut car on sait qu'il y a des données -->
+    <option value="Chantilly" selected>Chantilly</option>
+    <option value="Vincennes">Vincennes</option>
+    <option value="Deauville">Deauville</option>
+    <option value="Longchamp">Longchamp</option>
+    <option value="Enghien">Enghien</option>
+    <option value="Auteuil">Auteuil</option>
+    <option value="Saint-Cloud">Saint-Cloud</option>
+  </select>
   <select id="course" disabled><option value="">— Course —</option></select>
   <button id="load" disabled>Charger la course</button>
 </div>
 
-<div id="status">Chargement des hippodromes…</div>
+<div id="status">Chargement des courses...</div>
 <div id="result"></div>
 
 <div class="footer">
@@ -54,52 +61,39 @@
 </div>
 
 <script>
-// L'API qui fonctionne (celle que vous m'avez fournie)
+// LE PROXY INDISPENSABLE POUR CONTOURNER LE BLOCAGE SAFARI/IPHONE
+const PROXY = "https://api.allorigins.win/raw?url=";
 const API_ARR = "https://open-pmu-api.vercel.app/api/arrivees";
 const $ = id => document.getElementById(id);
-
-// On charge les hippodromes connus pour peupler le menu
-const HIPPODROMES = ["Chantilly", "Vincennes", "Deauville", "Longchamp", "Enghien", "Auteuil", "Saint-Cloud", "Cagnes-sur-Mer", "Marseille", "Lyon"];
-
 let currentCourses = [];
 
-// Initialisation
-function init() {
-  HIPPODROMES.forEach(h => {
-    const o = document.createElement("option");
-    o.value = h;
-    o.textContent = h;
-    $("hippo").appendChild(o);
-  });
-  $("status").textContent = "Sélectionnez un hippodrome.";
-}
-
-// Changement d'hippodrome -> on fetch les courses
-$("hippo").onchange = async () => {
-  const hippo = $("hippo").value;
+// Charger les courses de l'hippodrome
+async function loadHippodrome(hippo) {
   $("course").innerHTML = '<option value="">— Course —</option>';
   $("course").disabled = true;
   $("load").disabled = true;
   $("result").innerHTML = "";
-  if (!hippo) return;
+  $("status").textContent = "Recherche des courses pour " + hippo + "...";
 
-  $("status").textContent = "Recherche des courses…";
   try {
-    const res = await fetch(`${API_ARR}?hippo=${encodeURIComponent(hippo)}`);
+    // On encode l'URL de l'API pour la faire passer par le proxy
+    const targetUrl = encodeURIComponent(`${API_ARR}?hippo=${encodeURIComponent(hippo)}`);
+    const res = await fetch(PROXY + targetUrl);
+    
+    if (!res.ok) throw new Error("Erreur serveur");
     const data = await res.json();
     
     if (data.error) throw new Error("Erreur API");
     currentCourses = data.message || [];
     
     if (!currentCourses.length) {
-      $("status").textContent = "Aucune course trouvée pour cet hippodrome.";
+      $("status").innerHTML = `<span class="error">Aucune course trouvée pour ${hippo}.</span>`;
       return;
     }
 
     currentCourses.forEach((c, i) => {
       const o = document.createElement("option");
       o.value = i;
-      // Ex: PRIX DE LA CHAMBRE DU DUC (29/09/2026)
       const dateStr = c.date ? c.date.split('-').reverse().join('/') : '';
       o.textContent = `${c.prix} (${dateStr})`;
       $("course").appendChild(o);
@@ -110,26 +104,20 @@ $("hippo").onchange = async () => {
   } catch(e) {
     $("status").innerHTML = `<span class="error">Erreur réseau : ${e.message}</span>`;
   }
-};
+}
 
-$("course").onchange = () => {
-  $("load").disabled = !$("course").value;
-};
-
+// Événements
+$("hippo").onchange = () => loadHippodrome($("hippo").value);
+$("course").onchange = () => { $("load").disabled = !$("course").value; };
 $("load").onclick = () => {
-  const idx = $("course").value;
-  if (idx === "") return;
-  renderCourse(currentCourses[idx]);
+  if ($("course").value !== "") renderCourse(currentCourses[$("course").value]);
 };
 
-// Algo de pronostic (Cote + Musique)
+// Algo de pronostic
 function scoreProno(p) {
   let score = 0;
-  // 1. Cote (plus c'est bas, mieux c'est)
   const cote = p.cote < 999 ? p.cote : 50;
   score += Math.max(0, 100 - cote * 2);
-  
-  // 2. Musique (analyse des 5 dernières performances)
   const mus = (p.musique || "").split(/\s+/).slice(0,5);
   mus.forEach((m, i) => {
     const place = parseInt(m);
@@ -142,48 +130,42 @@ function scoreProno(p) {
   return Math.max(0, Math.round(score));
 }
 
-// Affichage d'une course
+// Affichage
 function renderCourse(c) {
   $("result").innerHTML = "";
-  
-  // Extraire les partants depuis "arrivee_details"
   let parts = [];
+  
   if (c.arrivee_details) {
     Object.keys(c.arrivee_details).forEach(num => {
       const d = c.arrivee_details[num];
-      // On prend la cote médiane ou moyenne pour le calcul
       let coteMoy = 999;
       if (d.cotes && d.cotes.length > 0) {
         coteMoy = d.cotes.reduce((a,b)=>a+b,0) / d.cotes.length;
       }
-      
       parts.push({
         numPmu: num,
         nom: d.nom_cheval,
         cote: coteMoy,
         musique: d.musique,
         driver: d.nom_jockey,
-        entraineur: d.nom_entraineur,
-        position: d.position // La vraie place d'arrivée
+        position: d.position
       });
     });
   }
 
   if (!parts.length) {
-    $("status").textContent = "Aucun partant disponible pour cette course.";
+    $("status").textContent = "Aucun détail de partant disponible.";
     return;
   }
 
-  // Header
   const info = document.createElement("div");
   info.className = "info";
   const dateStr = c.date ? c.date.split('-').reverse().join('/') : '';
-  info.innerHTML = `<h2>${c.r/c} — ${c.prix}</h2>
+  info.innerHTML = `<h2>${c["r/c"]} — ${c.prix}</h2>
     <p>${c.lieu} • ${dateStr} • ${c.discipline} ${c.distance}m • ${parts.length} partants</p>
     <p style="margin-top:6px;font-weight:600;color:#facc15">Arrivée officielle : ${c.arrivee.join(" - ")}</p>`;
   $("result").appendChild(info);
 
-  // Calcul du pronostic
   parts.forEach(p => p.score = scoreProno(p));
   const sorted = [...parts].sort((a,b) => b.score - a.score);
 
@@ -196,7 +178,6 @@ function renderCourse(c) {
     const card = document.createElement("div");
     card.className = "card" + (i===0?" top1":i===1?" top2":i===2?" top3":"");
     
-    // Afficher si le cheval a bien fini dans l'arrivée réelle
     const isInArrivee = c.arrivee.includes(parseInt(p.numPmu)) || c.arrivee.includes(p.numPmu);
     const arriveeBadge = isInArrivee ? `<span style="color:#22c55e;font-size:0.7rem;margin-left:6px">(Réel: ${p.position}e)</span>` : '';
 
@@ -216,7 +197,8 @@ function renderCourse(c) {
   $("status").textContent = `✅ Analyse terminée.`;
 }
 
-init();
+// Lancement automatique sur Chantilly
+loadHippodrome("Chantilly");
 </script>
 </body>
 </html>
