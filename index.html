@@ -10,12 +10,9 @@
   h1 { color:#38bdf8; text-align:center; font-size:1.3rem; margin-bottom:4px; }
   .sub { text-align:center; font-size:.75rem; color:#94a3b8; margin-bottom:14px; }
   .controls { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
-  select, button, textarea { width:100%; padding:12px; border-radius:10px; border:1px solid #334155; background:#1e293b; color:#e2e8f0; font-size:.9rem; font-family:inherit; }
+  select, button { width:100%; padding:13px; border-radius:10px; border:1px solid #334155; background:#1e293b; color:#e2e8f0; font-size:.95rem; }
   button { background:#0284c7; border-color:#0284c7; font-weight:600; }
   button:disabled { opacity:.5; }
-  button.refresh { background:#0ea5e9; }
-  button.import { background:#7c3aed; border-color:#7c3aed; }
-  textarea { min-height:120px; resize:vertical; }
   #status { text-align:center; margin:10px 0; color:#94a3b8; font-size:.85rem; }
   .info { background:#1e293b; padding:12px; border-radius:10px; border-left:4px solid #38bdf8; margin-bottom:10px; }
   .info h2 { color:#38bdf8; font-size:1rem; margin-bottom:4px; }
@@ -34,8 +31,6 @@
   .arrivee { background:#1e293b; padding:10px; border-radius:10px; margin-bottom:6px; font-size:.8rem; }
   .arrivee strong { color:#facc15; }
   .error { color:#f87171; text-align:center; padding:16px; font-size:.85rem; }
-  .import-zone { background:#1e293b; padding:14px; border-radius:10px; margin-top:14px; border:1px dashed #475569; }
-  .import-zone p { font-size:.8rem; color:#94a3b8; margin-bottom:8px; }
   .footer { text-align:center; margin-top:18px; font-size:.7rem; color:#64748b; line-height:1.5; }
 </style>
 </head>
@@ -45,88 +40,96 @@
 <p class="sub">Partants • Cotes • Pronostics • Arrivées</p>
 
 <div class="controls">
-  <select id="reunion"><option value="">— Réunion —</option></select>
+  <select id="hippo"><option value="">— Hippodrome —</option></select>
   <select id="course" disabled><option value="">— Course —</option></select>
-  <button id="load" disabled>Charger automatiquement</button>
-  <button id="refresh" class="refresh" disabled style="display:none">🔄 Rafraîchir les cotes</button>
+  <button id="load" disabled>Charger la course</button>
 </div>
 
-<div id="status">Chargement…</div>
+<div id="status">Chargement des hippodromes…</div>
 <div id="result"></div>
 
-<div id="importZone" class="import-zone" style="display:none">
-  <p>⚠️ Récupération automatique indisponible (réseau/CORS). Collez vos partants en JSON ou CSV :</p>
-  <textarea id="importText" placeholder='JSON: [{"numPmu":1,"nom":"ANSSIO","cote":6.1,"musique":"2p 2p 3p"}, ...]
-CSV: numPmu,nom,cote,musique
-1,ANSSIO,6.1,2p 2p 3p'></textarea>
-  <button id="importBtn" class="import" style="margin-top:8px">Importer ces partants</button>
-</div>
-
 <div class="footer">
-  Aucune donnée n'est inventée. Si l'API échoue, importez vos propres données.<br>
+  Données issues de open-pmu-api. Pronostics calculés (cotes + musique).<br>
   Jouer comporte des risques. 09 74 75 13 13.
 </div>
 
 <script>
-const PROXY = "https://corsproxy.io/?";
-const API_PMU = "https://offline.turfinfo.api.pmu.fr/rest/client/1/programme";
+// L'API qui fonctionne (celle que vous m'avez fournie)
 const API_ARR = "https://open-pmu-api.vercel.app/api/arrivees";
-const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
-let programme = null;
 const $ = id => document.getElementById(id);
 
-async function pmuGet(path) {
-  const res = await fetch(PROXY + encodeURIComponent(`${API_PMU}/${path}`));
-  if (!res.ok) throw new Error("PMU HTTP " + res.status);
-  return res.json();
-}
+// On charge les hippodromes connus pour peupler le menu
+const HIPPODROMES = ["Chantilly", "Vincennes", "Deauville", "Longchamp", "Enghien", "Auteuil", "Saint-Cloud", "Cagnes-sur-Mer", "Marseille", "Lyon"];
 
-async function init() {
-  try {
-    programme = await pmuGet(today);
-    (programme.reunions || []).forEach(ru => {
-      const o = document.createElement("option");
-      o.value = ru.numOfficiel;
-      o.textContent = `R${ru.numOfficiel} — ${ru.hippodrome?.libelleLong || ""}`;
-      $("reunion").appendChild(o);
-    });
-    $("status").textContent = "Sélectionnez une réunion.";
-  } catch(e) {
-    $("status").innerHTML = `<span class="error">Programme indisponible (${e.message}).</span>`;
-    $("importZone").style.display = "block";
-  }
-}
+let currentCourses = [];
 
-$("reunion").onchange = () => {
-  const ru = programme?.reunions?.find(x => String(x.numOfficiel) === $("reunion").value);
-  $("course").innerHTML = '<option value="">— Course —</option>';
-  $("course").disabled = !ru;
-  $("load").disabled = true;
-  $("refresh").style.display = "none";
-  $("result").innerHTML = "";
-  if (!ru) return;
-  (ru.courses || []).forEach(c => {
+// Initialisation
+function init() {
+  HIPPODROMES.forEach(h => {
     const o = document.createElement("option");
-    o.value = c.numOrdre;
-    o.textContent = `C${c.numOrdre} — ${c.libelle || ""} (${c.discipline || ""} ${c.distance || ""}m)`;
-    $("course").appendChild(o);
+    o.value = h;
+    o.textContent = h;
+    $("hippo").appendChild(o);
   });
-  $("status").textContent = "Sélectionnez une course.";
+  $("status").textContent = "Sélectionnez un hippodrome.";
+}
+
+// Changement d'hippodrome -> on fetch les courses
+$("hippo").onchange = async () => {
+  const hippo = $("hippo").value;
+  $("course").innerHTML = '<option value="">— Course —</option>';
+  $("course").disabled = true;
+  $("load").disabled = true;
+  $("result").innerHTML = "";
+  if (!hippo) return;
+
+  $("status").textContent = "Recherche des courses…";
+  try {
+    const res = await fetch(`${API_ARR}?hippo=${encodeURIComponent(hippo)}`);
+    const data = await res.json();
+    
+    if (data.error) throw new Error("Erreur API");
+    currentCourses = data.message || [];
+    
+    if (!currentCourses.length) {
+      $("status").textContent = "Aucune course trouvée pour cet hippodrome.";
+      return;
+    }
+
+    currentCourses.forEach((c, i) => {
+      const o = document.createElement("option");
+      o.value = i;
+      // Ex: PRIX DE LA CHAMBRE DU DUC (29/09/2026)
+      const dateStr = c.date ? c.date.split('-').reverse().join('/') : '';
+      o.textContent = `${c.prix} (${dateStr})`;
+      $("course").appendChild(o);
+    });
+
+    $("course").disabled = false;
+    $("status").textContent = `${currentCourses.length} courses trouvées. Sélectionnez-en une.`;
+  } catch(e) {
+    $("status").innerHTML = `<span class="error">Erreur réseau : ${e.message}</span>`;
+  }
 };
 
 $("course").onchange = () => {
-  const ok = !!$("course").value;
-  $("load").disabled = !ok;
-  if (ok) $("refresh").style.display = "block";
+  $("load").disabled = !$("course").value;
 };
 
-$("load").onclick = load;
-$("refresh").onclick = load;
+$("load").onclick = () => {
+  const idx = $("course").value;
+  if (idx === "") return;
+  renderCourse(currentCourses[idx]);
+};
 
+// Algo de pronostic (Cote + Musique)
 function scoreProno(p) {
   let score = 0;
+  // 1. Cote (plus c'est bas, mieux c'est)
   const cote = p.cote < 999 ? p.cote : 50;
   score += Math.max(0, 100 - cote * 2);
+  
+  // 2. Musique (analyse des 5 dernières performances)
   const mus = (p.musique || "").split(/\s+/).slice(0,5);
   mus.forEach((m, i) => {
     const place = parseInt(m);
@@ -139,14 +142,48 @@ function scoreProno(p) {
   return Math.max(0, Math.round(score));
 }
 
-function renderCourse(coData, parts) {
+// Affichage d'une course
+function renderCourse(c) {
   $("result").innerHTML = "";
+  
+  // Extraire les partants depuis "arrivee_details"
+  let parts = [];
+  if (c.arrivee_details) {
+    Object.keys(c.arrivee_details).forEach(num => {
+      const d = c.arrivee_details[num];
+      // On prend la cote médiane ou moyenne pour le calcul
+      let coteMoy = 999;
+      if (d.cotes && d.cotes.length > 0) {
+        coteMoy = d.cotes.reduce((a,b)=>a+b,0) / d.cotes.length;
+      }
+      
+      parts.push({
+        numPmu: num,
+        nom: d.nom_cheval,
+        cote: coteMoy,
+        musique: d.musique,
+        driver: d.nom_jockey,
+        entraineur: d.nom_entraineur,
+        position: d.position // La vraie place d'arrivée
+      });
+    });
+  }
+
+  if (!parts.length) {
+    $("status").textContent = "Aucun partant disponible pour cette course.";
+    return;
+  }
+
+  // Header
   const info = document.createElement("div");
   info.className = "info";
-  info.innerHTML = `<h2>${coData?.r/c || ""} — ${coData?.prix || coData?.libelle || ""}</h2>
-    <p>${coData?.lieu || ""} • ${coData?.discipline || ""} ${coData?.distance || "?"}m • ${parts.length} partants</p>`;
+  const dateStr = c.date ? c.date.split('-').reverse().join('/') : '';
+  info.innerHTML = `<h2>${c.r/c} — ${c.prix}</h2>
+    <p>${c.lieu} • ${dateStr} • ${c.discipline} ${c.distance}m • ${parts.length} partants</p>
+    <p style="margin-top:6px;font-weight:600;color:#facc15">Arrivée officielle : ${c.arrivee.join(" - ")}</p>`;
   $("result").appendChild(info);
 
+  // Calcul du pronostic
   parts.forEach(p => p.score = scoreProno(p));
   const sorted = [...parts].sort((a,b) => b.score - a.score);
 
@@ -158,11 +195,16 @@ function renderCourse(coData, parts) {
   sorted.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = "card" + (i===0?" top1":i===1?" top2":i===2?" top3":"");
+    
+    // Afficher si le cheval a bien fini dans l'arrivée réelle
+    const isInArrivee = c.arrivee.includes(parseInt(p.numPmu)) || c.arrivee.includes(p.numPmu);
+    const arriveeBadge = isInArrivee ? `<span style="color:#22c55e;font-size:0.7rem;margin-left:6px">(Réel: ${p.position}e)</span>` : '';
+
     card.innerHTML = `
       <div class="rank">${i+1}</div>
       <div class="info-h">
-        <div class="name">${p.numPmu || ""} — ${p.nom || ""}</div>
-        <div class="meta">${p.driver || p.jockey || ""} • Musique: ${p.musique || "—"}</div>
+        <div class="name">${p.numPmu} — ${p.nom}${arriveeBadge}</div>
+        <div class="meta">${p.driver || ""} • Musique: ${p.musique || "—"}</div>
       </div>
       <div style="text-align:right">
         <div class="cote">${p.cote < 999 ? p.cote.toFixed(1) : "—"}</div>
@@ -170,95 +212,9 @@ function renderCourse(coData, parts) {
       </div>`;
     $("result").appendChild(card);
   });
+
+  $("status").textContent = `✅ Analyse terminée.`;
 }
-
-async function load() {
-  const ru = $("reunion").value, co = $("course").value;
-  $("status").textContent = "Chargement…";
-  $("result").innerHTML = "";
-  $("load").disabled = true;
-  $("importZone").style.display = "none";
-
-  try {
-    const data = await pmuGet(`${today}/R${ru}/C${co}/participants`);
-    const parts = (data.participants || []).map(p => ({
-      ...p,
-      cote: parseFloat(p.dernierRapportDirect?.rapport) || parseFloat(p.dernierRapportReference?.rapport) || 999
-    }));
-
-    const ruData = programme.reunions.find(x => String(x.numOfficiel) === ru);
-    const coData = ruData.courses.find(c => String(c.numOrdre) === co);
-
-    renderCourse({ ...coData, lieu: ruData.hippodrome?.libelleLong, prix: coData.libelle }, parts);
-    $("status").textContent = `✅ Mis à jour à ${new Date().toLocaleTimeString()}`;
-
-    // Arrivées passées
-    try {
-      const arrRes = await fetch(`${API_ARR}?prix=${encodeURIComponent(coData.libelle || "")}`);
-      const arrData = await arrRes.json();
-      const courses = (arrData.message || []).slice(0, 3);
-      if (courses.length) {
-        const titleA = document.createElement("div");
-        titleA.className = "section-title";
-        titleA.textContent = "📊 Arrivées passées (même prix)";
-        $("result").appendChild(titleA);
-        courses.forEach(c => {
-          const div = document.createElement("div");
-          div.className = "arrivee";
-          div.innerHTML = `<strong>${c.date}</strong> — ${c.lieu} • ${c.discipline} ${c.distance}m<br>
-            Arrivée : <strong>${(c.arrivee||[]).join(" - ")}</strong>`;
-          $("result").appendChild(div);
-        });
-      }
-    } catch(e) {}
-
-    $("load").disabled = false;
-  } catch(e) {
-    $("status").innerHTML = `<span class="error">Récupération impossible (${e.message}).<br>Utilisez l'import ci-dessous.</span>`;
-    $("importZone").style.display = "block";
-    $("load").disabled = false;
-  }
-}
-
-// Import JSON/CSV manuel
-$("importBtn").onclick = () => {
-  const txt = $("importText").value.trim();
-  if (!txt) return;
-  let parts = [];
-  try {
-    if (txt.startsWith("[")) {
-      parts = JSON.parse(txt).map(p => ({
-        numPmu: p.numPmu || p.numero,
-        nom: p.nom,
-        cote: parseFloat(p.cote) || 999,
-        musique: p.musique || "",
-        driver: p.driver || p.jockey || ""
-      }));
-    } else {
-      const lines = txt.split("\n").filter(l => l.trim());
-      const sep = lines[0].includes(";") ? ";" : ",";
-      const head = lines[0].split(sep).map(h => h.trim());
-      for (let i = 1; i < lines.length; i++) {
-        const vals = lines[i].split(sep);
-        const obj = {};
-        head.forEach((h, j) => obj[h] = (vals[j] || "").trim());
-        parts.push({
-          numPmu: obj.numPmu || obj.numero,
-          nom: obj.nom,
-          cote: parseFloat(obj.cote) || 999,
-          musique: obj.musique || "",
-          driver: obj.driver || obj.jockey || ""
-        });
-      }
-    }
-    if (!parts.length) throw new Error("Aucun partant détecté");
-    renderCourse({ libelle: "Import manuel", discipline: "", distance: "", lieu: "" }, parts);
-    $("status").textContent = `✅ ${parts.length} partants importés.`;
-    $("importZone").style.display = "none";
-  } catch(err) {
-    $("status").innerHTML = `<span class="error">Erreur d'import : ${err.message}</span>`;
-  }
-};
 
 init();
 </script>
