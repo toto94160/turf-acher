@@ -2,172 +2,81 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mes Pronos PMU</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, system-ui, sans-serif; background:#0f172a; color:#e2e8f0; padding:16px; }
-  h1 { color:#38bdf8; text-align:center; font-size:1.3rem; margin-bottom:4px; }
-  .sub { text-align:center; font-size:.75rem; color:#94a3b8; margin-bottom:14px; }
-  .controls { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
-  select, button { width:100%; padding:13px; border-radius:10px; border:1px solid #334155; background:#1e293b; color:#e2e8f0; font-size:.95rem; }
-  button { background:#0284c7; border-color:#0284c7; font-weight:600; }
-  button:disabled { opacity:.5; }
-  #status { text-align:center; margin:10px 0; color:#94a3b8; font-size:.85rem; }
-  .info { background:#1e293b; padding:12px; border-radius:10px; border-left:4px solid #38bdf8; margin-bottom:10px; }
-  .info h2 { color:#38bdf8; font-size:1rem; margin-bottom:4px; }
-  .info p { font-size:.8rem; color:#cbd5e1; }
-  .section-title { font-size:.8rem; color:#94a3b8; margin:14px 0 8px; text-transform:uppercase; letter-spacing:1px; }
-  .card { background:#1e293b; padding:10px; border-radius:10px; margin-bottom:6px; display:flex; align-items:center; gap:10px; border-left:3px solid #475569; }
-  .card.top1 { border-left-color:#facc15; }
-  .card.top2 { border-left-color:#cbd5e1; }
-  .card.top3 { border-left-color:#d97706; }
-  .rank { font-size:1.1rem; font-weight:700; color:#38bdf8; min-width:26px; text-align:center; }
-  .info-h { flex:1; min-width:0; }
-  .name { font-weight:600; font-size:.9rem; }
-  .meta { font-size:.72rem; color:#94a3b8; margin-top:1px; }
-  .cote { font-weight:700; color:#22c55e; font-size:.95rem; text-align:right; }
-  .score { font-size:.7rem; color:#facc15; }
-  .error { color:#f87171; text-align:center; padding:16px; font-size:.85rem; }
-  .footer { text-align:center; margin-top:18px; font-size:.7rem; color:#64748b; line-height:1.5; }
+  body { font-family: -apple-system, system-ui, sans-serif; background:#0f172a; color:#e2e8f0; height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 16px; text-align: center; border-bottom: 1px solid #334155; background: #1e293b; z-index: 10; }
+  h1 { color:#38bdf8; font-size:1.2rem; }
+  .sub { font-size:.75rem; color:#94a3b8; margin-top: 4px; }
+  .controls { padding: 12px; display: flex; gap: 8px; background: #0f172a; z-index: 10; }
+  button { flex: 1; padding: 12px; border-radius: 8px; border: none; background: #0284c7; color: white; font-size: 0.9rem; font-weight: 600; }
+  button:active { background: #0369a1; }
+  .frame-container { flex: 1; width: 100%; position: relative; background: white; }
+  iframe { width: 100%; height: 100%; border: none; display: block; }
+  .error-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #64748b; font-size: 0.9rem; padding: 20px; }
 </style>
 </head>
 <body>
 
-<h1>🐎 Mes Pronos PMU</h1>
-<p class="sub">Partants • Cotes • Pronostics • Arrivées</p>
+<header>
+  <h1>🐎 Mes Pronos PMU</h1>
+  <p class="sub">Les vraies données officielles en direct</p>
+</header>
 
 <div class="controls">
-  <button id="load" style="background:#0ea5e9">Charger les données (Chantilly)</button>
+  <button onclick="loadPmu('programme')">📅 Programme</button>
+  <button onclick="loadPmu('pronostics')">🎯 Pronostics</button>
 </div>
 
-<div id="status">Prêt à charger.</div>
-<div id="result"></div>
-
-<div class="footer">
-  Données issues de open-pmu-api. Pronostics calculés (cotes + musique).<br>
-  Jouer comporte des risques. 09 74 75 13 13.
+<div class="frame-container" id="frameContainer">
+  <div class="error-message">Cliquez sur un bouton pour afficher les données du PMU.</div>
 </div>
 
 <script>
-// On utilise l'URL EXACTE qui a fonctionné dans votre premier message
-const API_URL = "https://open-pmu-api.vercel.app/api/arrivees?hippo=Chantilly";
-const $ = id => document.getElementById(id);
-
-// Algo de pronostic
-function scoreProno(p) {
-  let score = 0;
-  const cote = p.cote < 999 ? p.cote : 50;
-  score += Math.max(0, 100 - cote * 2);
-  const mus = (p.musique || "").split(/\s+/).slice(0,5);
-  mus.forEach((m, i) => {
-    const place = parseInt(m);
-    if (!isNaN(place)) {
-      if (place === 1) score += 15 - i*2;
-      else if (place <= 3) score += 8 - i;
-      else if (place <= 5) score += 3 - i*0.5;
-    }
-  });
-  return Math.max(0, Math.round(score));
-}
-
-// Affichage
-function renderCourse(c) {
-  $("result").innerHTML = "";
-  let parts = [];
+// Fonction pour charger le site du PMU directement dans l'application
+function loadPmu(page) {
+  const container = document.getElementById("frameContainer");
   
-  if (c.arrivee_details) {
-    Object.keys(c.arrivee_details).forEach(num => {
-      const d = c.arrivee_details[num];
-      let coteMoy = 999;
-      if (d.cotes && d.cotes.length > 0) {
-        coteMoy = d.cotes.reduce((a,b)=>a+b,0) / d.cotes.length;
-      }
-      parts.push({
-        numPmu: num,
-        nom: d.nom_cheval,
-        cote: coteMoy,
-        musique: d.musique,
-        driver: d.nom_jockey,
-        position: d.position
-      });
-    });
+  // On affiche un message de chargement
+  container.innerHTML = '<div class="error-message">Chargement des données officielles...</div>';
+  
+  // On crée l'iframe vers le site du PMU
+  const iframe = document.createElement("iframe");
+  
+  if (page === 'programme') {
+    // Lien vers le programme des courses du jour
+    iframe.src = "https://www.pmu.fr/turf/programme";
+  } else {
+    // Lien vers les pronostics du jour
+    iframe.src = "https://www.pmu.fr/turf/pronostics";
   }
-
-  if (!parts.length) return;
-
-  const info = document.createElement("div");
-  info.className = "info";
-  const dateStr = c.date ? c.date.split('-').reverse().join('/') : '';
-  info.innerHTML = `<h2>${c["r/c"]} — ${c.prix}</h2>
-    <p>${c.lieu} • ${dateStr} • ${c.discipline} ${c.distance}m • ${parts.length} partants</p>
-    <p style="margin-top:6px;font-weight:600;color:#facc15">Arrivée officielle : ${c.arrivee.join(" - ")}</p>`;
-  $("result").appendChild(info);
-
-  parts.forEach(p => p.score = scoreProno(p));
-  const sorted = [...parts].sort((a,b) => b.score - a.score);
-
-  const titleP = document.createElement("div");
-  titleP.className = "section-title";
-  titleP.textContent = "🎯 Pronostic (score cote + musique)";
-  $("result").appendChild(titleP);
-
-  sorted.forEach((p, i) => {
-    const card = document.createElement("div");
-    card.className = "card" + (i===0?" top1":i===1?" top2":i===2?" top3":"");
-    
-    const isInArrivee = c.arrivee.includes(parseInt(p.numPmu)) || c.arrivee.includes(p.numPmu);
-    const arriveeBadge = isInArrivee ? `<span style="color:#22c55e;font-size:0.7rem;margin-left:6px">(Réel: ${p.position}e)</span>` : '';
-
-    card.innerHTML = `
-      <div class="rank">${i+1}</div>
-      <div class="info-h">
-        <div class="name">${p.numPmu} — ${p.nom}${arriveeBadge}</div>
-        <div class="meta">${p.driver || ""} • Musique: ${p.musique || "—"}</div>
+  
+  // Quand l'iframe charge, on l'ajoute au conteneur
+  iframe.onload = function() {
+    container.innerHTML = "";
+    container.appendChild(iframe);
+  };
+  
+  // Si le site refuse de s'afficher (sécurité), on affiche un bouton de secours
+  iframe.onerror = function() {
+    container.innerHTML = `
+      <div class="error-message">
+        Le PMU bloque l'affichage intégré.<br><br>
+        <a href="${iframe.src}" style="color:#38bdf8;text-decoration:underline;">Ouvrir directement dans Safari</a>
       </div>
-      <div style="text-align:right">
-        <div class="cote">${p.cote < 999 ? p.cote.toFixed(1) : "—"}</div>
-        <div class="score">score ${p.score}</div>
-      </div>`;
-    $("result").appendChild(card);
-  });
-}
-
-// Chargement direct
-$("load").onclick = async () => {
-  $("status").textContent = "Chargement des données de Chantilly...";
-  $("load").disabled = true;
-  try {
-    // Un fetch direct, sans aucun proxy
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    
-    if (data.error) throw new Error("Erreur API");
-    const courses = data.message || [];
-    
-    if (!courses.length) {
-      $("status").textContent = "Aucune course trouvée.";
-      $("load").disabled = false;
-      return;
+    `;
+  };
+  
+  // On tente le chargement
+  setTimeout(() => {
+    if (!container.querySelector('iframe')) {
+      container.innerHTML = "";
+      container.appendChild(iframe);
     }
-
-    // On affiche les 5 premières courses pour ne pas surcharger l'écran
-    $("result").innerHTML = "";
-    const title = document.createElement("div");
-    title.className = "section-title";
-    title.textContent = "📊 Courses trouvées à Chantilly";
-    $("result").appendChild(title);
-
-    courses.slice(0, 5).forEach(c => renderCourse(c));
-    
-    $("status").textContent = `✅ ${courses.length} courses chargées (5 affichées).`;
-    $("load").disabled = false;
-  } catch(e) {
-    $("status").innerHTML = `<span class="error">Erreur : ${e.message}</span>`;
-    $("load").disabled = false;
-  }
-};
+  }, 100);
+}
 </script>
 </body>
 </html>
